@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OdcBatchExcel/OdcBatchExcel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OdcBatchExcel.Tests/OdcBatchExcel.Tests.csproj" />
+  </Folder>
+</Solution>
