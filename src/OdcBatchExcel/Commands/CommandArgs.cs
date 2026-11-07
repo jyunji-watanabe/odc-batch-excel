@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -271,6 +272,10 @@ internal static class CommandArgs
             UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
             RespectNullableAnnotations = true,
             RespectRequiredConstructorParameters = true,
+
+            // Results go to ODC apps, never into HTML, so keep non-ASCII text and quotes as they are:
+            // "日本語" stays 9 UTF-8 bytes instead of 18 bytes of \uXXXX escapes.
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
         };
         options.MakeReadOnly();
