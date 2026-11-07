@@ -64,7 +64,9 @@ internal sealed class ResponseBudget
     public void CheckTotal(int fileLength)
     {
         var fileBytes = Base64Size(fileLength);
-        var total = fileBytes + this.resultBytes;
+        // {"File":"","Results":[]} contributes 24 bytes even when there are no reads.
+        const int responseOverheadBytes = 24;
+        var total = fileBytes + this.resultBytes + responseOverheadBytes;
         if (total > this.maxBytes)
         {
             throw new InvalidOperationException(
