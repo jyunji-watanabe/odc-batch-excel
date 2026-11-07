@@ -30,7 +30,24 @@ csharp_style_var_elsewhere = true:suggestion
 csharp_style_expression_bodied_methods = when_on_single_line:silent
 csharp_prefer_braces = true:warning
 
-# Naming: private fields are camelCase (accessed via `this.`, per StyleCop)
+# Naming: private constants and static readonly fields are PascalCase, which StyleCop also
+# requires (SA1303, SA1311). These rules are more specific, so they win over the next one.
+dotnet_naming_rule.private_constants_pascal_case.symbols = private_constants
+dotnet_naming_rule.private_constants_pascal_case.style = pascal_case
+dotnet_naming_rule.private_constants_pascal_case.severity = warning
+dotnet_naming_symbols.private_constants.applicable_kinds = field
+dotnet_naming_symbols.private_constants.applicable_accessibilities = private
+dotnet_naming_symbols.private_constants.required_modifiers = const
+
+dotnet_naming_rule.private_static_readonly_pascal_case.symbols = private_static_readonly
+dotnet_naming_rule.private_static_readonly_pascal_case.style = pascal_case
+dotnet_naming_rule.private_static_readonly_pascal_case.severity = warning
+dotnet_naming_symbols.private_static_readonly.applicable_kinds = field
+dotnet_naming_symbols.private_static_readonly.applicable_accessibilities = private
+dotnet_naming_symbols.private_static_readonly.required_modifiers = static, readonly
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+# Naming: other private fields are camelCase (accessed via `this.`, per StyleCop)
 dotnet_naming_rule.private_fields_camel_case.symbols = private_fields
 dotnet_naming_rule.private_fields_camel_case.style = camel_case
 dotnet_naming_rule.private_fields_camel_case.severity = warning
@@ -46,6 +63,14 @@ dotnet_diagnostic.IDE0161.severity = warning # file-scoped namespace
 dotnet_diagnostic.SA1633.severity = none # file header
 dotnet_diagnostic.SA1200.severity = none # usings inside namespace (we use outside)
 dotnet_diagnostic.SA1101.severity = warning # prefix local calls with this.
+
+[src/OdcBatchExcel/Commands/Arguments.cs]
+# The JSON argument and result records are a few lines each and are read as one catalog,
+# so they share one file instead of thirteen.
+dotnet_diagnostic.SA1402.severity = none # one type per file
+dotnet_diagnostic.SA1649.severity = none # file name matches first type
+# NoArgs is empty on purpose: parsing into it rejects every property, e.g. for GetSheetNames.
+dotnet_diagnostic.S2094.severity = none # empty record
 
 [tests/**.cs]
 # Test classes/methods don't need XML docs, and test names use underscores.

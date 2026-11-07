@@ -3,7 +3,11 @@
 [![CI](https://github.com/jyunji-watanabe/odc-batch-excel/actions/workflows/ci.yml/badge.svg)](https://github.com/jyunji-watanabe/odc-batch-excel/actions/workflows/ci.yml)
 
 An [OutSystems Developer Cloud](https://www.outsystems.com/developer-cloud/) External Logic library (C#, .NET 10)
-that will provide batch processing of Excel files for ODC apps. For now, it contains a single sample action, `Greet`.
+for batch processing of Excel files in ODC apps. Its one action, `Execute`, takes an .xlsx workbook and a list of
+commands, such as setting values and formulas, inserting or deleting rows and columns, or reading cells and ranges.
+It runs them all in one call and returns the updated workbook plus anything the commands read.
+
+See [docs/design.md](docs/design.md) for the contract, the operation catalog and the known limitations.
 
 ## Quick start
 

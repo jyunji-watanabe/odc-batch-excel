@@ -6,15 +6,21 @@ Guidance for AI coding agents (Claude Code, Copilot, etc.) working in this repos
 
 An **OutSystems Developer Cloud (ODC) External Logic** library written in C# (.NET 10).
 ODC loads the compiled DLL and exposes each method of the `[OSInterface]` interface as a
-server action that ODC apps can call. It currently has a single sample action, `Greet`.
+server action that ODC apps can call. It has one action, `Execute`, which runs a list of
+commands (operation name + JSON arguments) on an Excel workbook using ClosedXML.
+**Read [docs/design.md](docs/design.md) first**: it holds the contract, the operation catalog, the
+argument rules, the known limitations and the steps for adding an operation.
 
 ## Layout
 
 ```
 src/OdcBatchExcel/            The library (uploaded to ODC)
   IOdcBatchExcel.cs           [OSInterface] contract: one [OSAction] per server action
-  OdcBatchExcel.cs            Implementation
+  OdcBatchExcel.cs            Implementation of Execute
+  Command.cs, ExecuteResult.cs, CommandResult.cs   [OSStructure] types
+  Commands/                   Operation catalog, one private method per operation, argument parsing
 tests/OdcBatchExcel.Tests/    xUnit v3 tests (Microsoft.Testing.Platform runner)
+docs/design.md                Design: contract, operations, limitations, how to add an operation
 scripts/package.sh            Builds the ODC-ready zip into artifacts/
 Directory.Build.props         Shared build + analyzer settings (all projects)
 Directory.Packages.props      Central NuGet versions (set versions here, never in .csproj)

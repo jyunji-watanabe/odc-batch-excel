@@ -6,6 +6,11 @@
 
   <ItemGroup>
     <PackageReference Include="OutSystems.ExternalLibraries.SDK" />
+    <PackageReference Include="ClosedXML" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OdcBatchExcel.Tests" />
   </ItemGroup>
 
   <!-- Install the Husky.Net git hooks on first local build. Skipped on CI or when HUSKY=0. -->
