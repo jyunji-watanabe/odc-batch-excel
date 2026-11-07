@@ -41,6 +41,7 @@ CommandResult  { CommandIndex: Integer, Operation: Text, Value: Text } // Value 
 - **Operation names** are case-insensitive. Results always use the canonical name.
 - **Reads:** each read command adds one `CommandResult`, in command order. `CommandIndex` is
   the command's 1-based position. Write commands add no results.
+- **Size:** the response must fit ODC's 5.5 MB limit. See [Limits](#limits).
 - **All or nothing:** if any command fails, the whole action fails and no file is returned.
   The error message starts with the command's position and the operation as it was given, e.g.
   `Command #3 (SetCellValue): Value '1,5' is not a valid Number. ...`.
@@ -114,7 +115,23 @@ silently ignored:
 
 - **ODC External Logic:** payloads up to 5.5 MB in each direction (the file is sent both ways),
   95 seconds per call and 1 GB of memory. Split very large workbooks or reads across calls.
-- **Reads:** `GetRangeValues` refuses ranges of more than 1,000,000 cells.
+- **Response size:** `Execute` keeps its response under 5.5 MB (`ResponseBudget`), so an
+  oversized batch fails with a message that says what to split, not a generic ODC error.
+  - **What is counted:** the estimate assumes ODC sends the response as JSON with Binary Data
+    as Base64, so the file counts as 4/3 of its size. Each read result counts as its UTF-8 bytes
+    plus JSON escaping and a small allowance for field names.
+  - **When it fails:**
+    - at the read whose result alone is over the limit (`The result is about ... Read a smaller range.`)
+    - at the read that takes all results so far over it (`The read results so far are about ...`)
+    - or, after the last command, when the file plus all results are over it (`The response would be about ...`)
+  - **Basis:** in the maintainer's experience, ODC and External Logic exchange data as JSON,
+    and .NET JSON serializers encode `byte[]` as Base64. The exact encoding and how ODC measures
+    the limit are not documented, so if a real response is rejected below the estimate, or accepted
+    above it, change `ResponseBudget.DefaultMaxBytes`.
+- **Reads:** `GetRangeValues` refuses ranges of more than 1,000,000 cells before reading them.
+  This guards memory only. The response-size check above is what bounds the result.
+- **Result text:** result JSON keeps non-ASCII text as UTF-8 (`日本語`, not `日...`), so
+  it counts at its real size.
 
 ## Known limitations
 
@@ -142,6 +159,7 @@ changes them is noticed.
 src/OdcBatchExcel/
   IOdcBatchExcel.cs              [OSInterface] contract: the Execute action
   OdcBatchExcel.cs               Execute: open/create the workbook, run each command, save
+  ResponseBudget.cs              Keeps the response (file + read results) under ODC's 5.5 MB limit
   Command.cs, ExecuteResult.cs,
   CommandResult.cs               [OSStructure] types
   Commands/
@@ -157,6 +175,7 @@ tests/OdcBatchExcel.Tests/
   ContractTests.cs               The ODC-facing contract (names, signature, structure fields)
   ExecuteTests.cs                Behavior of every operation, batching and general errors
   ArgumentValidationTests.cs     Valid/invalid argument tables for every operation, plus completeness checks
+  ResponseLimitTests.cs          The 5.5 MB response limit: single reads, accumulated reads, file + results
   Batch.cs                       Test helpers
 ```
 

@@ -8,7 +8,8 @@ namespace OdcBatchExcel.Commands;
 /// </content>
 internal static partial class CommandRunner
 {
-    // Keeps a single read well inside ODC's 5.5 MB payload limit and the 1 GB memory limit.
+    // A memory guard for the 1 GB limit, checked before any cell is read. It does not bound the
+    // result size: ResponseBudget enforces ODC's 5.5 MB response limit on the serialized results.
     private const int MaxRangeCells = 1_000_000;
 
     private static string? GetCellValue(IXLWorkbook workbook, string? arguments)
