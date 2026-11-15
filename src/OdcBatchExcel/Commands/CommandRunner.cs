@@ -27,6 +27,7 @@ internal static partial class CommandRunner
         new("GetCellValue", typeof(CellArgs), GetCellValue),
         new("GetRangeValues", typeof(RangeArgs), GetRangeValues),
         new("GetUsedRange", typeof(SheetArgs), GetUsedRange),
+        new("GetColumnWidth", typeof(ColumnWidthArgs), GetColumnWidth),
         new("GetSheetNames", typeof(NoArgs), GetSheetNames),
     ];
 

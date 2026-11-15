@@ -89,8 +89,9 @@ A formula cell returns its calculated value.
 | Operation | Arguments | Result `Value` |
 |---|---|---|
 | `GetCellValue` | **`Cell`** | `{"Value":"42","Type":"Number"}`. `Type` is one of `Blank`, `Text`, `Number`, `Boolean`, `DateTime`, `TimeSpan` or `Error`. For errors, `Value` is the Excel error code, e.g. `#DIV/0!`. |
-| `GetRangeValues` | **`Range`** | `{"Rows":[["a","1"],["b","2"]]}`. `Range` is `A1:D20` or a single cell. Whole-column ranges like `A:A` aren't accepted. At most 1,000,000 cells. |
+| `GetRangeValues` | **`Range`**, `RowFormat` | `{"Rows":[["a","1"],["b","2"]]}`. `Range` is `A1:D20` or a single cell. Whole-column ranges like `A:A` aren't accepted. At most 1,000,000 cells. `RowFormat` is `Arrays` (default) or `Objects`, which wraps each row: `{"Rows":[{"Values":["a","1"]},...]}`. ODC has no list-of-lists type, so ODC apps use `Objects`. |
 | `GetUsedRange` | — | `{"Address":"A1:D20","FirstRow":1,"FirstColumn":1,"RowCount":20,"ColumnCount":4}`. On an empty sheet, `Address` is `""` and the numbers are `0`. Only cells with content count, not formatting alone. |
+| `GetColumnWidth` | **`Column`** | `{"Width":8.43}`, in Excel character units. `Column` is a single letter. Use it to check `SetColumnWidth` and `AutoFitColumns`. |
 | `GetSheetNames` | none: `{}` | `{"Names":["Sheet1","Data"]}`, in workbook order. |
 
 ## Argument rules
@@ -167,7 +168,8 @@ src/OdcBatchExcel/
     CommandRunner.Cells.cs       SetCellValue, SetFormula, SetRangeValues
     CommandRunner.RowsColumns.cs InsertRows, DeleteRows, InsertColumns, DeleteColumns,
                                  SetColumnWidth, AutoFitColumns
-    CommandRunner.Reads.cs       GetCellValue, GetRangeValues, GetUsedRange, GetSheetNames
+    CommandRunner.Reads.cs       GetCellValue, GetRangeValues, GetUsedRange, GetColumnWidth,
+                                 GetSheetNames
     Arguments.cs                 One record per operation's arguments, plus the read result records
     CommandArgs.cs               Strict JSON parsing and shared validation (sheets, addresses, values)
     CommandArgumentException.cs  Thrown for bad arguments; Execute wraps it with the command index

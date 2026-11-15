@@ -25,6 +25,7 @@ internal static partial class CommandRunner
     {
         var args = CommandArgs.Parse<RangeArgs>(arguments);
         var (first, last) = CommandArgs.Range(args.Range, "Range");
+        var asObjects = RowsAsObjects(args.RowFormat);
         var range = CommandArgs.Sheet(workbook, args.Sheet).Range(first, last);
 
         var rowCount = range.RowCount();
@@ -46,7 +47,18 @@ internal static partial class CommandRunner
             rows.Add(row);
         }
 
-        return CommandArgs.Serialize(new RangeValuesResult(rows));
+        return asObjects
+            ? CommandArgs.Serialize(new RangeRowsResult([.. rows.Select(r => new RangeRow(r))]))
+            : CommandArgs.Serialize(new RangeValuesResult(rows));
+    }
+
+    private static string? GetColumnWidth(IXLWorkbook workbook, string? arguments)
+    {
+        var args = CommandArgs.Parse<ColumnWidthArgs>(arguments);
+        var column = CommandArgs.Column(args.Column, 1);
+
+        var width = CommandArgs.Sheet(workbook, args.Sheet).Column(column).Width;
+        return CommandArgs.Serialize(new ColumnWidthResult(width));
     }
 
     private static string? GetUsedRange(IXLWorkbook workbook, string? arguments)
@@ -73,6 +85,23 @@ internal static partial class CommandRunner
     {
         CommandArgs.Parse<NoArgs>(arguments);
         return CommandArgs.Serialize(new SheetNamesResult([.. workbook.Worksheets.Select(w => w.Name)]));
+    }
+
+    // Arrays is the original shape. Objects exists because ODC has no list-of-lists type, so an
+    // ODC app can only deserialize rows that are wrapped in objects.
+    private static bool RowsAsObjects(string? rowFormat)
+    {
+        if (string.IsNullOrEmpty(rowFormat) || string.Equals(rowFormat, "Arrays", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (string.Equals(rowFormat, "Objects", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        throw new CommandArgumentException($"RowFormat '{rowFormat}' is not valid. Use Arrays or Objects.");
     }
 
     private static (string Value, string Type) Read(IXLCell cell)

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ClosedXML.Excel;
 using static OdcBatchExcel.Tests.Batch;
 
@@ -383,6 +384,39 @@ public class ExecuteTests
         var result = Run(DataWorkbook(), Cmd("GetRangeValues", $$"""{"Range":"{{range}}"}"""));
 
         Assert.Equal(expected, result.Results.Single().Value);
+    }
+
+    [Theory]
+    [InlineData("A1:B2", """{"Rows":[{"Values":["a1","b1"]},{"Values":["a2","b2"]}]}""")]
+    [InlineData("B3", """{"Rows":[{"Values":["b3"]}]}""")]
+    public void GetRangeValues_RowFormatObjects_WrapsEachRow(string range, string expected)
+    {
+        var result = Run(DataWorkbook(), Cmd("GetRangeValues", $$"""{"Range":"{{range}}","RowFormat":"objects"}"""));
+
+        Assert.Equal(expected, result.Results.Single().Value);
+    }
+
+    [Fact]
+    public void GetColumnWidth_ReturnsTheWidthSetBySetColumnWidth()
+    {
+        var result = Run(
+            Cmd("SetColumnWidth", """{"Columns":"B:C","Width":20.5}"""),
+            Cmd("GetColumnWidth", """{"Column":"C"}"""));
+
+        Assert.Equal("""{"Width":20.5}""", result.Results.Single().Value);
+    }
+
+    [Fact]
+    public void GetColumnWidth_AfterAutoFit_IsWiderThanTheDefault()
+    {
+        var result = Run(
+            Cmd("GetColumnWidth", """{"Column":"B"}"""),
+            Cmd("SetCellValue", $$"""{"Cell":"B1","Value":"{{new string('W', 60)}}"}"""),
+            Cmd("AutoFitColumns", """{"Columns":"B"}"""),
+            Cmd("GetColumnWidth", """{"Column":"B"}"""));
+
+        var widths = result.Results.Select(r => JsonDocument.Parse(r.Value).RootElement.GetProperty("Width").GetDouble()).ToList();
+        Assert.True(widths[1] > widths[0] * 3, $"Default {widths[0]}, after AutoFit {widths[1]}.");
     }
 
     [Fact]
