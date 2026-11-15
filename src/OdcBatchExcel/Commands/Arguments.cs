@@ -116,6 +116,22 @@ internal sealed record RangeArgs
 
     /// <summary>Gets the range address, e.g. <c>A1:D20</c>.</summary>
     public required string Range { get; init; }
+
+    /// <summary>
+    /// Gets the shape of each row in the result: <c>Arrays</c> (default, <c>["a","1"]</c>) or
+    /// <c>Objects</c> (<c>{"Values":["a","1"]}</c>, which ODC's JSONDeserialize can read).
+    /// </summary>
+    public string? RowFormat { get; init; }
+}
+
+/// <summary>Arguments of <c>GetColumnWidth</c>.</summary>
+internal sealed record ColumnWidthArgs
+{
+    /// <summary>Gets the worksheet name; empty means the first worksheet.</summary>
+    public string? Sheet { get; init; }
+
+    /// <summary>Gets the column letter, e.g. <c>C</c>.</summary>
+    public required string Column { get; init; }
 }
 
 /// <summary>Arguments of <c>GetUsedRange</c>.</summary>
@@ -136,6 +152,18 @@ internal sealed record CellValueResult(string Value, string Type);
 /// <summary>Result of <c>GetRangeValues</c>.</summary>
 /// <param name="Rows">The values, row by row.</param>
 internal sealed record RangeValuesResult(IReadOnlyList<IReadOnlyList<string>> Rows);
+
+/// <summary>Result of <c>GetRangeValues</c> with <c>RowFormat</c> <c>Objects</c>.</summary>
+/// <param name="Rows">The rows, each wrapped in an object.</param>
+internal sealed record RangeRowsResult(IReadOnlyList<RangeRow> Rows);
+
+/// <summary>One row of <see cref="RangeRowsResult"/>.</summary>
+/// <param name="Values">The row's values.</param>
+internal sealed record RangeRow(IReadOnlyList<string> Values);
+
+/// <summary>Result of <c>GetColumnWidth</c>.</summary>
+/// <param name="Width">The column width in Excel character units.</param>
+internal sealed record ColumnWidthResult(double Width);
 
 /// <summary>Result of <c>GetUsedRange</c>.</summary>
 /// <param name="Address">The used range, e.g. <c>A1:D20</c>; empty for an empty sheet.</param>

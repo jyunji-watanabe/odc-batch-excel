@@ -39,9 +39,13 @@ public class ArgumentValidationTests
         { "GetCellValue", """{"Cell":"A1"}""" },
         { "GetCellValue", """{"Sheet":"Sheet1","Cell":"$A$1"}""" },
         { "GetRangeValues", """{"Range":"A1"}""" },
-        { "GetRangeValues", """{"Sheet":"Sheet1","Range":"A1:C3"}""" },
+        { "GetRangeValues", """{"Sheet":"Sheet1","Range":"A1:C3","RowFormat":"Objects"}""" },
+        { "GetRangeValues", """{"Range":"A1","RowFormat":"arrays"}""" },
+        { "GetRangeValues", """{"Range":"A1","RowFormat":""}""" },
         { "GetUsedRange", "{}" },
         { "GetUsedRange", """{"Sheet":"Sheet1"}""" },
+        { "GetColumnWidth", """{"Column":"A"}""" },
+        { "GetColumnWidth", """{"Sheet":"Sheet1","Column":"xfd"}""" },
         { "GetSheetNames", "{}" },
     };
 
@@ -175,11 +179,21 @@ public class ArgumentValidationTests
         { "GetRangeValues", """{"Range":"A:A"}""", "Range 'A:A' is not a valid range address, e.g. A1:D20." },
         { "GetRangeValues", """{"Range":"A1:B2:C3"}""", "Range 'A1:B2:C3' is not a valid range address, e.g. A1:D20." },
         { "GetRangeValues", """{"Range":"A1:Z100000"}""", "Range 'A1:Z100000' has more than 1,000,000 cells; read it in smaller parts." },
+        { "GetRangeValues", """{"Range":"A1","RowFormat":"Rows"}""", "RowFormat 'Rows' is not valid. Use Arrays or Objects." },
+        { "GetRangeValues", """{"Range":"A1","RowFormat":1}""", "Property 'RowFormat' must be a string." },
 
         // GetUsedRange
         { "GetUsedRange", """{"Range":"A1"}""", "Unknown property 'Range'. Allowed properties: Sheet." },
         { "GetUsedRange", """{"Sheet":1}""", "Property 'Sheet' must be a string." },
         { "GetUsedRange", """{"Sheet":"Nope"}""", "Sheet 'Nope' was not found." },
+
+        // GetColumnWidth
+        { "GetColumnWidth", "{}", "Missing required property 'Column'." },
+        { "GetColumnWidth", """{"Columns":"A"}""", "Unknown property 'Columns'. Allowed properties: Sheet, Column." },
+        { "GetColumnWidth", """{"Column":"A:B"}""", "Column 'A:B' is not a valid column letter, e.g. C." },
+        { "GetColumnWidth", """{"Column":"XFE"}""", "Column 'XFE' is not a valid column letter, e.g. C." },
+        { "GetColumnWidth", """{"Column":2}""", "Property 'Column' must be a string." },
+        { "GetColumnWidth", """{"Column":"A","Sheet":"Nope"}""", "Sheet 'Nope' was not found." },
 
         // GetSheetNames
         { "GetSheetNames", """{"Sheet":"Sheet1"}""", "Unknown property 'Sheet'. This operation takes no arguments; use {}." },
