@@ -16,6 +16,61 @@ and returns the updated workbook along with anything the commands read.
 | 3 | ODC Library `BatchExcel`: one Action per operation that builds a command, plus `ExecuteBatch` | ODC tenant | Built; see [ODC Library](#part-3-odc-library-batchexcel) |
 | 4 | ODC test app `BatchExcelTests` using BDDFramework | ODC tenant | Built; see [BDD test app](#part-4-bdd-test-app-batchexceltests) |
 
+How the parts connect:
+
+```mermaid
+flowchart LR
+  subgraph Repo["GitHub repo: odc-batch-excel"]
+    CS["<b>OdcBatchExcel</b> (C#, .NET 10, ClosedXML)<br/>one action: Execute(File, Commands)<br/>operations behind a JSON contract"]
+    UT["<b>Unit tests</b> (xUnit v3)<br/>incl. completeness checks"]
+    UT -- "dotnet test (local + CI)" --> CS
+  end
+
+  subgraph Tenant["ODC tenant"]
+    EL["<b>External Logic</b><br/>OdcBatchExcel<br/>runs in its own container"]
+    LIB["<b>Library: BatchExcel</b><br/>Cmd_* ×14 (typed builders)<br/>ExecuteBatch<br/>Result_* ×5 (typed readers)"]
+    APP["<b>Consumer apps</b>"]
+    BDD["<b>App: BatchExcelTests</b><br/>BDD scenarios"]
+    BDDF["<b>BDD Framework</b><br/>(Forge library)"]
+  end
+
+  CS -- "scripts/package.sh → zip<br/>→ Portal upload → MCP publish" --> EL
+  APP -- "typed Actions, no JSON" --> LIB
+  BDD -- "typed Actions, no JSON" --> LIB
+  BDD -- "BDDScenario, BDDStep,<br/>AssertValue, AssertTrue" --> BDDF
+  LIB -- "ONE remote call per batch:<br/>File + JSON commands" --> EL
+```
+
+The ODC Library is compiled into each consuming app, so building commands with `Cmd_*` costs no
+network round trip. Only `ExecuteBatch` crosses to the External Logic, once per batch:
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant App as ODC App (Server Action)
+  participant Lib as ODC Library
+  participant EL as External Logic
+
+  Note over App,Lib: Build the batch locally: no network<br/>バッチはローカルで組み立てる（通信なし）
+  App->>Lib: Cmd_SetRangeValues(StartCell, Rows, ColumnTypes)
+  Lib-->>App: ExcelCommand
+  App->>Lib: Cmd_SetFormula("C5", "SUMPRODUCT(B2:B4,C2:C4)")
+  Lib-->>App: ExcelCommand
+  App->>Lib: Cmd_GetCellValue("C5")
+  Lib-->>App: ExcelCommand
+
+  App->>Lib: ExecuteBatch(File, Commands)
+  rect rgba(120, 160, 255, 0.15)
+    Lib->>EL: Execute(File, [Command × N]): the only remote call
+    Note over EL: open the workbook once<br/>run N commands in order<br/>(each sees the previous ones' changes)<br/>save once<br/><br/>ブックを一度だけ開く<br/>N 個のコマンドを順番に実行<br/>（各コマンドは前のコマンドの変更を参照できる）<br/>一度だけ保存
+    EL-->>Lib: ExecuteResult(File, Results)
+  end
+  Lib-->>App: ExcelExecuteResult
+
+  App->>Lib: Result_GetCellValue(Results[0])
+  Lib-->>App: CellValue {Value: "1912.5", Type: "Number"}
+```
+
 The Excel library is [ClosedXML](https://github.com/ClosedXML/ClosedXML) (MIT license). It reads
 and writes .xlsx, calculates formulas, and is built on Microsoft's OpenXML SDK. The packaged zip is
 about 3 MB.
